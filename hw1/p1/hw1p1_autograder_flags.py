@@ -7,7 +7,7 @@ DEBUG_AND_GRADE_LINEAR_flag = False
 
 # flags for activation.py
 
-DEBUG_AND_GRADE_IDENTITY_flag = True
+DEBUG_AND_GRADE_IDENTITY_flag = False
 DEBUG_AND_GRADE_SIGMOID_flag = False
 DEBUG_AND_GRADE_TANH_flag = False
 DEBUG_AND_GRADE_RELU_flag = False
