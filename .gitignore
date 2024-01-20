@@ -1,6 +1,7 @@
 hw1/p1/__pycache__
 hw1/p1/material
 hw1/p1/notebooks
+hw1/p1/models/__pycache__
 hw1/p1/mytorch/__pycache__
 hw1/p1/mytorch/nn/__pycache__
 hw1/p1/mytorch/optim/__pycache__

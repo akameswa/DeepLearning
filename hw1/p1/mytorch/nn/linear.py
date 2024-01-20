@@ -38,4 +38,4 @@ class Linear:
             
             self.dLdA = dLdA
 
-        return NotImplemented
+        return dLdA
