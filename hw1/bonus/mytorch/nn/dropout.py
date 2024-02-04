@@ -11,11 +11,11 @@ class Dropout(object):
         return self.forward(x)
 
     def forward(self, x, train=True):
+        self.mask = np.random.binomial(1, 1-self.p, size=x.shape) 
 
         if train:
             # TODO: Generate mask and apply to x
-            self.mask = np.random.binomial(1, 1-self.p, size=x.shape) 
-            return x * self.mask/ (1-self.p)
+            return x * self.mask / (1-self.p) 
             
         else:
             # TODO: Return x as is
