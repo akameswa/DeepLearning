@@ -92,7 +92,12 @@ class Autograd:
         # TODO: Add all of the inputs to the self.gradient_buffer using the add_spot() function
         # This will allow the gradients to be tracked
 
+        for inp in inputs:
+            self.gradient_buffer.add_spot(inp)
+
         # TODO: Append an Operation object to the self.operation_list
+        obj = Operation(inputs, output, gradients_to_update, backward_operation)
+        self.operation_list.append(obj)
 
 
     def backward(self, divergence):
