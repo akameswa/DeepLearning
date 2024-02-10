@@ -14,3 +14,7 @@ hw1/bonus/mytorch/models/__pycache__
 hw1/bonus/mytorch/nn/__pycache__
 hw1/bonus/mytorch/optim/__pycache__
 hw1/autograd/material
+hw1/autograd/__pycache__
+hw1/autograd/mytorch/__pycache__
+hw1/autograd/mytorch/nn/__pycache__
+hw1/autograd/autograder/__pycache__
