@@ -112,14 +112,19 @@ class Autograd:
         """
         # TODO: Iterate through the self.operation_list and propagate the gradients.
         # NOTE: Make sure you iterate in the correct direction. How are gradients propagated?
-
+        for op in reversed(self.operation_list):
 
         # TODO: For the first iteration set the gradient to be propagated equal to the divergence.
         # For the remaining iterations the gradient to be propagated can be retrieved from the
         # self.gradient_buffer.get_param.
+            if op == self.operation_list[-1]:
+                grad = divergence
+            else:
+                grad = self.gradient_buffer.get_param(op.inputs)
 
         # TODO: Execute the backward for the Operation
         # NOTE: Make sure to unroll the inputs list if you aren't parsing a list in your backward.
+            grad = op.backward_operation(grad, *op.inputs)
 
         # TODO: Loop through the inputs and their corresponding gradients.
         # Check with the Operation's gradients_to_update if you need to
@@ -128,6 +133,13 @@ class Autograd:
         #   self.gradient_buffer
         #   2) Inputs with externally tracked gradients: update gradients_to_update
         # NOTE: Make sure the order of gradients align with the order of inputs
+            comb = zip(op.inputs, grad)
+            for i, c in enumerate(comb):
+                inp, grad = c
+                if op.gradients_to_update[i] is None:
+                    self.gradient_buffer.update_param(inp, grad)
+                else:
+                    op.gradients_to_update[i] += grad
 
 
     def zero_grad(self):
