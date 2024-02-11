@@ -28,8 +28,6 @@ class Upsample1d():
             dLdA (np.array): (batch_size, in_channels, input_width)
         """
 
-        output_width = (dLdZ.shape[2] - 1) // self.upsampling_factor + 1
-        dLdA = np.zeros((dLdZ.shape[0], dLdZ.shape[1], output_width))
         dLdA = dLdZ[:, :, ::self.upsampling_factor]
 
         return dLdA
