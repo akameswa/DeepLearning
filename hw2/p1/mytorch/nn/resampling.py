@@ -111,10 +111,11 @@ class Downsample2d():
         Return:
             Z (np.array): (batch_size, in_channels, output_height, output_width)
         """
+        self.input_height = A.shape[2]
+        self.input_width = A.shape[3]
+        Z = A[:, :, ::self.downsampling_factor, ::self.downsampling_factor]
 
-        Z = None  # TODO
-
-        return NotImplemented
+        return Z
 
     def backward(self, dLdZ):
         """
@@ -124,6 +125,7 @@ class Downsample2d():
             dLdA (np.array): (batch_size, in_channels, input_height, input_width)
         """
 
-        dLdA = None  # TODO
+        dLdA = np.zeros((dLdZ.shape[0], dLdZ.shape[1], self.input_height, self.input_width))
+        dLdA[:, :, ::self.downsampling_factor, ::self.downsampling_factor] = dLdZ
 
-        return NotImplemented
+        return dLdA
