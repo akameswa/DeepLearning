@@ -99,5 +99,14 @@ class SoftmaxCrossEntropy(LossFN):
         # TODO: calculate loss value and set self.loss_val
         # To simplify things, add a single operation corresponding to the
         # backward function created for this loss
+        softmax = np.exp(y_hat) / np.sum(np.exp(y_hat), axis=1, keepdims=True)
+        self.loss_val = ((-1 * y * np.log(softmax)) @ np.ones((y.shape[1], 1))).squeeze(axis=1)
 
-        raise NotImplementedError
+        self.autograd_engine.add_operation(
+            [y_hat, y],
+            self.loss_val,
+            [None, None],
+            SoftmaxCrossEntropy_backward
+        )
+        
+        return self.loss_val
