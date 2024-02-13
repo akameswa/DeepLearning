@@ -99,6 +99,12 @@ def sigmoid_backward(grad_output, a):
     a_grad = grad_output * np.exp(-a) / (1 + np.exp(-a)) ** 2
 
     return a_grad
+def tanh_backward(grad_output, a):
+    """Backward of tanh"""
+
+    a_grad = grad_output * (1 - np.tanh(a) ** 2)
+
+    return a_grad
     """
     TODO: implement Softmax CrossEntropy Loss here. You may want to
     modify the function signature to include more inputs.
