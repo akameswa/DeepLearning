@@ -106,5 +106,13 @@ class ReLU(Activation):
 
         # TODO Compute forward with primitive operations
         # TODO Add operations to the autograd engine as you go
+
+        self.state = np.where(x <= 0, 0, x)
+        self.autograd_engine.add_operation(
+            [x], 
+            self.state, 
+            [None], 
+            relu_backward
+        )
         
-        raise NotImplementedError
+        return self.state
