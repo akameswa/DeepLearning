@@ -57,7 +57,15 @@ class Sigmoid(Activation):
         # TODO Compute forward with primitive operations
         # TODO Add operations to the autograd engine as you go
 
-        raise NotImplementedError
+        self.state = 1 / (1 + np.exp(-x))
+        self.autograd_engine.add_operation(
+            [x], 
+            self.state, 
+            [None], 
+            sigmoid_backward
+        )
+    
+        return self.state
 
 
 class Tanh(Activation):
