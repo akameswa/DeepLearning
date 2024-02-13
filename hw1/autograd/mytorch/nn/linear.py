@@ -43,4 +43,22 @@ class Linear():
         #      the autograd engine after each operation
         # TODO: remember to return the computed value
 
-        raise NotImplementedError
+        self.h = x @ self.W.T
+        self.autograd_engine.add_operation(
+            [x, self.W.T], 
+            self.h, 
+            [None, self.dW.T], 
+            matmul_backward
+        )
+
+        self.y = self.h + self.b.T
+        self.autograd_engine.add_operation(
+            [self.h, self.b.T], 
+            self.y, 
+            [None, self.db.T], 
+            add_backward
+        )
+
+        return self.y   
+    
+    
