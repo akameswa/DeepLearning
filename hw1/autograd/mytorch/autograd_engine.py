@@ -120,7 +120,7 @@ class Autograd:
             if op == self.operation_list[-1]:
                 grad = divergence
             else:
-                grad = self.gradient_buffer.get_param(op.inputs)
+                grad = self.gradient_buffer.get_param(op.output)
 
         # TODO: Execute the backward for the Operation
         # NOTE: Make sure to unroll the inputs list if you aren't parsing a list in your backward.
