@@ -81,8 +81,16 @@ class Tanh(Activation):
 
         # TODO Compute forward with primitive operations
         # TODO Add operations to the autograd engine as you go
+
+        self.state = (np.exp(x) - np.exp(-x)) / (np.exp(x) + np.exp(-x))
+        self.autograd_engine.add_operation(
+            [x], 
+            self.state, 
+            [None], 
+            tanh_backward
+        )
         
-        raise NotImplementedError
+        return self.state
 
 
 class ReLU(Activation):
