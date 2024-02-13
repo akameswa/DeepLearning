@@ -99,12 +99,23 @@ def sigmoid_backward(grad_output, a):
     a_grad = grad_output * np.exp(-a) / (1 + np.exp(-a)) ** 2
 
     return a_grad
+
 def tanh_backward(grad_output, a):
     """Backward of tanh"""
 
     a_grad = grad_output * (1 - np.tanh(a) ** 2)
 
     return a_grad
+
+def relu_backward(grad_output, a):
+    """Backward of relu"""
+
+    a_grad = grad_output * (a > 0)
+
+    return a_grad
+
+
+def SoftmaxCrossEntropy_backward(grad_output, y_hat, y):
     """
     TODO: implement Softmax CrossEntropy Loss here. You may want to
     modify the function signature to include more inputs.
@@ -114,6 +125,7 @@ def tanh_backward(grad_output, a):
           more primitive operations.
     """
 
-    return NotImplementedError
-
-
+    softmax = np.exp(y_hat) / np.sum(np.exp(y_hat), axis=1, keepdims=True)
+    a_grad = (softmax-y)
+    
+    return a_grad, None
