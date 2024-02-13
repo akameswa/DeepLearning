@@ -93,8 +93,12 @@ def sum_backward(grad_output, a):
 
     return a_grad
 
+def sigmoid_backward(grad_output, a):
+    """Backward of sigmoid"""
 
-def SoftmaxCrossEntropy_backward(grad_output, pred, ground_truth):
+    a_grad = grad_output * np.exp(-a) / (1 + np.exp(-a)) ** 2
+
+    return a_grad
     """
     TODO: implement Softmax CrossEntropy Loss here. You may want to
     modify the function signature to include more inputs.
