@@ -133,14 +133,11 @@ class Autograd:
         #   self.gradient_buffer
         #   2) Inputs with externally tracked gradients: update gradients_to_update
         # NOTE: Make sure the order of gradients align with the order of inputs
-            comb = zip(op.inputs, grad)
-            for i, c in enumerate(comb):
-                inp, grad = c
+            for i, inp in enumerate(op.inputs):
                 if op.gradients_to_update[i] is None:
-                    self.gradient_buffer.update_param(inp, grad)
+                    self.gradient_buffer.update_param(inp, grad[i])
                 else:
-                    op.gradients_to_update[i] += grad
-
+                    op.gradients_to_update[i] += grad[i]
 
     def zero_grad(self):
         """
