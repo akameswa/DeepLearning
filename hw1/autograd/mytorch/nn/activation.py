@@ -40,7 +40,7 @@ class Identity(Activation):
 
         self.state = x
 
-        raise NotImplementedError
+        return self.state
 
 
 class Sigmoid(Activation):
