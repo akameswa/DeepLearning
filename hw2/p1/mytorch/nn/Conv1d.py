@@ -36,9 +36,13 @@ class Conv1d_stride1():
         """
         self.A = A
 
-        Z = None  # TODO
+        self.output_size = A.shape[2] - self.kernel_size + 1
+        Z = np.zeros((A.shape[0], self.out_channels, self.output_size))
 
-        return NotImplemented
+        for i in range(self.output_size):
+            Z[:,:,i] = np.tensordot(A[:, :, i:i + self.kernel_size], self.W, axes=([1,2],[1,2])) + self.b
+
+        return Z
 
     def backward(self, dLdZ):
         """
@@ -47,12 +51,21 @@ class Conv1d_stride1():
         Return:
             dLdA (np.array): (batch_size, in_channels, input_size)
         """
+        self.dLdb = np.sum(dLdZ, axis=(0,2))
+        self.dLdW = np.zeros_like(self.W)
 
-        self.dLdW = None  # TODO
-        self.dLdb = None  # TODO
-        dLdA = None  # TODO
+        for i in range(self.kernel_size):
+            row = self.A[:,:,i:i+self.output_size]
+            self.dLdW[:,:,i] = np.tensordot(dLdZ, row, axes=([0, 2], [0, 2]))
 
-        return NotImplemented
+        self.dLdA = np.zeros_like(self.A)
+        padded_dLdZ = np.pad(dLdZ, ((0,0),(0,0), (self.kernel_size-1, self.kernel_size-1)))
+        flipped_weight = np.flip(self.W, axis=2)
+
+        for i in range(self.A.shape[2]):
+            self.dLdA[:,:,i] = np.tensordot(padded_dLdZ[:,:,i:i+self.kernel_size], flipped_weight, axes=([1,2],[0,2]))
+
+        return self.dLdA
 
 
 class Conv1d():
