@@ -67,7 +67,23 @@ class MeanPool2d_stride1():
         Return:
             Z (np.array): (batch_size, out_channels, output_width, output_height)
         """
-        raise NotImplementedError
+        self.A = A
+
+        batch, channel, width, height = A.shape
+
+        out_width = width - self.kernel + 1
+        out_height = height - self.kernel + 1
+
+        Z = np.zeros((batch, channel, out_width, out_height))
+
+        for b in range(batch):
+            for c in range(channel):
+                for h in range(out_height):
+                    for w in range(out_width):
+                        a = A[b, c, h:h + self.kernel, w:w + self.kernel]
+                        Z[b, c, h, w] = np.mean(a)
+
+        return Z
 
     def backward(self, dLdZ):
         """
@@ -77,7 +93,18 @@ class MeanPool2d_stride1():
             dLdA (np.array): (batch_size, in_channels, input_width, input_height)
         """
 
-        raise NotImplementedError
+        batch, channel, width, height = self.A.shape
+        dLdA = np.zeros(self.A.shape)
+
+        for b in range(batch):
+            for c in range(channel):
+                for w in range(width - self.kernel + 1):
+                    for h in range(height - self.kernel + 1):
+                        for i in range(self.kernel):
+                            for j in range(self.kernel):
+                                dLdA[b, c, h + i, w + j] += dLdZ[b, c, h, w] / (self.kernel ** 2)
+
+        return dLdA
 
 
 class MaxPool2d():
