@@ -70,13 +70,17 @@ class ReLU:
     """
     def forward(self, Z):
 
-        self.A = np.where(Z<=0, 0, Z)
-
+        # self.A = np.where(Z<=0, 0, Z)
+        
+        self.A = np.maximum(0, Z)       # OH debug
         return self.A
 
     def backward(self, dLdA):
 
-        dAdZ = np.where(self.A<=0, 0, 1)
+        # dAdZ = np.where(self.A<=0, 0, 1)
+        # dLdZ = dLdA * dAdZ
+
+        dAdZ = np.where(self.A>0, 1, 0)  # OH debug
         dLdZ = dLdA * dAdZ
 
         return dLdZ
