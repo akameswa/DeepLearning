@@ -47,14 +47,17 @@ class Tanh:
     """
     def forward(self, Z):
 
-        self.A = (np.exp(Z) - np.exp(-Z))/(np.exp(Z) + np.exp(-Z))
+        self.A = np.tanh(Z)             # OH debug
 
         return self.A
 
     def backward(self, dLdA):
 
-        dAdZ = np.ones_like(self.A) - self.A * self.A
-        dLdZ = dLdA * dAdZ
+        #dAdZ = np.ones_like(self.A) - self.A * self.A
+        #dLdZ = dLdA * dAdZ
+
+        dAdZ = 1 - self.A**2            # OH debug
+        dLdZ = dLdA * dAdZ              # OH debug
 
         return dLdZ
 
