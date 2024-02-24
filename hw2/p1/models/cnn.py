@@ -63,9 +63,17 @@ class CNN(object):
         # self.linear_layer         (Linear)      = Linear(???)
         # <---------------------
 
-        self.convolutional_layers = None
-        self.flatten = None
-        self.linear_layer = None
+        self.convolutional_layers = [Conv1d(in_channels=num_input_channels, out_channels=num_channels[0], kernel_size=kernel_sizes[0], stride=strides[0], weight_init_fn=conv_weight_init_fn, bias_init_fn=bias_init_fn),
+                                     Conv1d(in_channels=num_channels[0], out_channels=num_channels[1], kernel_size=kernel_sizes[1], stride=strides[1], weight_init_fn=conv_weight_init_fn, bias_init_fn=bias_init_fn),
+                                     Conv1d(in_channels=num_channels[1], out_channels=num_channels[2], kernel_size=kernel_sizes[2], stride=strides[2], weight_init_fn=conv_weight_init_fn, bias_init_fn=bias_init_fn)]
+        self.flatten = Flatten()
+
+
+        for i in range(self.nlayers):
+            input_width = ((input_width - kernel_sizes[i]) // strides[i]) + 1
+
+        self.linear_layer = Linear(in_features = num_channels[-1] * input_width, 
+                                   out_features = num_linear_neurons)
 
     def forward(self, A):
         """
@@ -80,8 +88,17 @@ class CNN(object):
         # <---------------------
 
         # Save output (necessary for error and loss)
-        self.Z = A
+        # self.Z = A
+        
+        for i in range(self.nlayers):
+            # self.Z = self.convolutional_layers[i].forward(self.Z)
+            # self.Z = self.activations[i].forward(self.Z)
 
+            self.Z = self.convolutional_layers[i].forward(A) # OH debug
+            A = self.activations[i].forward(self.Z)          # OH debug   
+
+        A = self.flatten.forward(A)                          # OH debug
+        self.Z = self.linear_layer.forward(A)                # OH debug
         return self.Z
 
     def backward(self, labels):
@@ -99,6 +116,12 @@ class CNN(object):
         # Your code goes here -->
         # Iterate through each layer in reverse order
         # <---------------------
+        grad = self.linear_layer.backward(grad)
+        grad = self.flatten.backward(grad)
+
+        for i in reversed(range(self.nlayers)):                 # OH debug  
+            grad = self.activations[i].backward(grad)           
+            grad = self.convolutional_layers[i].backward(grad)
 
         return grad
 
