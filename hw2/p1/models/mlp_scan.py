@@ -74,10 +74,10 @@ class CNN_DistributedScanningMLP():
         # self.conv3 = ???
         # ...
         # <---------------------
-        self.conv1 = None
-        self.conv2 = None
-        self.conv3 = None
-        self.layers = [] # TODO: Add the layers in the correct order
+        self.conv1 = Conv1d(in_channels=24, out_channels=2, kernel_size=2, stride=2)
+        self.conv2 = Conv1d(in_channels=2, out_channels=8, kernel_size=2, stride=2)
+        self.conv3 = Conv1d(in_channels=8, out_channels=4, kernel_size=2, stride=1)
+        self.layers = [self.conv1, ReLU(), self.conv2, ReLU(), self.conv3, Flatten()] # TODO: Add the layers in the correct order
 
     def __call__(self, A):
         # Do not modify this method
@@ -89,9 +89,9 @@ class CNN_DistributedScanningMLP():
         # Load them appropriately into the CNN
 
         w1, w2, w3 = weights
-        self.conv1.conv1d_stride1.W = None
-        self.conv2.conv1d_stride1.W = None
-        self.conv3.conv1d_stride1.W = None
+        self.conv1.conv1d_stride1.W = np.transpose(np.reshape(w1[:48, :2].T, (2, 2, 24)), axes=(0,2,1))
+        self.conv2.conv1d_stride1.W = np.transpose(np.reshape(w2[:4, :8].T, (8, 2, 2)), axes=(0,2,1))
+        self.conv3.conv1d_stride1.W = np.transpose(np.reshape(w3.T, (4, 2, 8)), axes=(0,2,1))
 
     def forward(self, A):
         """
