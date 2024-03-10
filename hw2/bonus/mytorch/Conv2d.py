@@ -65,7 +65,7 @@ class Conv2d_stride1():
                 row = self.A[:,:,i:i+self.output_height,j:j+self.output_width]
                 self.dLdW[:,:,i,j] = np.tensordot(dLdZ, row, axes=([0, 2, 3], [0, 2, 3]))
 
-        self.dLdA = np.zeros_like(self.A)
+        self.dLdA = np.zeros_like(self.A, dtype=np.float64)
         padded_dLdZ = np.pad(dLdZ, ((0,0),(0,0), (self.kernel_size-1, self.kernel_size-1), (self.kernel_size-1, self.kernel_size-1)))
         flipped_weight = np.flip(self.W, axis=(2,3))
 
