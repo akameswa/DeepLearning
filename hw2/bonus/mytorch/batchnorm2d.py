@@ -38,30 +38,33 @@ class BatchNorm2d:
         """
 
         if eval:
-            # TODO
-            raise NotImplemented
+            self.BZ = (Z - self.running_M) / np.sqrt(self.running_V + self.eps)
+            self.BZ = self.BW * self.BZ + self.Bb
+            return self.BZ
 
         self.Z = Z
-        self.N = None  # TODO
+        self.N = Z.shape[0] * Z.shape[2] * Z.shape[3]
 
-        self.M = None  # TODO
-        self.V = None  # TODO
-        self.NZ = None  # TODO
-        self.BZ = None  # TODO
+        self.M = np.reshape(np.mean(Z, axis=(0, 2, 3)), (1, -1, 1, 1))
+        self.V = np.reshape(np.var(Z, axis=(0, 2, 3)), (1, -1, 1, 1))
+        self.NZ = (Z - self.M) / np.sqrt(self.V + self.eps)  
+        self.BZ = self.BW * self.NZ + self.Bb
 
-        self.running_M = None  # TODO
-        self.running_V = None  # TODO
+        self.running_M = self.alpha * self.running_M + (1 - self.alpha) * self.M
+        self.running_V = self.alpha * self.running_V + (1 - self.alpha) * self.V
 
         return self.BZ
 
     def backward(self, dLdBZ):
-        self.dLdBW = None  # TODO
-        self.dLdBb = None  # TODO
+        self.dLdBW = np.reshape(np.sum(dLdBZ * self.NZ, axis=(0, 2, 3)), (1, -1, 1, 1))
+        self.dLdBb = np.reshape(np.sum(dLdBZ, axis=(0, 2, 3)), (1, -1, 1, 1))
 
-        dLdNZ = None  # TODO
-        dLdV = None  # TODO
-        dLdM = None  # TODO
+        dLdNZ = dLdBZ * self.BW
+        dLdV = np.reshape((-0.5) * np.sum(dLdNZ * (self.Z - self.M) * ((self.V + self.eps) ** (-1.5)), axis=(0, 2, 3)), (1, -1, 1, 1))
+        dNZdM = -((self.V + self.eps) ** (-0.5)) - 0.5 * (self.Z - self.M) * ((self.V + self.eps) ** (-1.5)) * np.reshape((-2 / self.N) * np.sum(self.Z - self.M, axis=(0, 2, 3)), (1, -1, 1, 1))
+        dLdM = np.reshape(np.sum(dLdNZ * dNZdM, axis=(0, 2, 3)), (1, -1, 1, 1))
 
-        dLdZ = None  # TODO
+        dLdZ = dLdNZ * ((self.V + self.eps) ** (-0.5)) + dLdV * ((2 / self.N) * (self.Z - self.M)) + dLdM * (1 / self.N)
 
-        raise NotImplemented
+
+        return dLdZ
