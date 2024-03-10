@@ -24,8 +24,12 @@ class Dropout2d(object):
         # 2) Scale your output accordingly
         # 3) During test time, you should not apply any mask or scaling.
         #TODO
-        raise NotImplementedError
-
+        if eval:
+            return x
+        else:
+            self.mask = np.random.binomial(1, 1-self.p, (x.shape[0], x.shape[1], 1, 1))
+            return x * self.mask / (1-self.p)
+          
     def backward(self, delta):
         """
         Arguments:
@@ -36,5 +40,5 @@ class Dropout2d(object):
         # 1) This method is only called during training.
         # 2) You should scale the result by chain rule
         #TODO
-        raise NotImplementedError
+        return delta * self.mask / (1-self.p)
 
