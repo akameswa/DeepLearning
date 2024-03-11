@@ -11,27 +11,35 @@ import os
 
 class ConvBlock(object):
 	def __init__(self, in_channels, out_channels, kernel_size, stride, padding):
-		#TODO	
-		self.layers = [] 											
+		self.layers = [
+			Conv2d(in_channels, out_channels, kernel_size, stride, padding), 
+			BatchNorm2d(out_channels), 
+			] 										
 
 	def forward(self, A):
-		#TODO
-		return NotImplemented
-
+		for layer in self.layers:
+			A = layer.forward(A)
+		return A
+	
 	def backward(self, grad): 
-		#TODO
-		return NotImplemented
-
+		for layer in self.layers[::-1]:
+			grad = layer.backward(grad)
+		return grad
 
 class ResBlock(object):
 	def __init__(self, in_channels, out_channels, filter_size, stride=3, padding=1):
-		self.convolution_layers =  [ ] #TODO Initialize all layers in this list.				
-		self.final_activation =	None				#TODO 
+		self.convolution_layers = [
+			ConvBlock(in_channels, out_channels, filter_size, stride, padding),
+			ReLU(),
+			ConvBlock(out_channels, out_channels, 1, 1, 0),
+			]	
+					
+		self.final_activation =	ReLU()
 
 		if stride != 1 or in_channels != out_channels or filter_size!=1 or padding!=0:
-			self.residual_connection = None 		#TODO
+			self.residual_connection = ConvBlock(in_channels, out_channels, filter_size, stride, padding)
 		else:
-			self.residual_connection = None			#TODO 
+			self.residual_connection = [Identity()] 
 
 
 	def forward(self, A):
@@ -40,22 +48,26 @@ class ResBlock(object):
 		Implement the forward for convolution layer.
 
 		'''
-		#TODO 
+		for l in self.convolution_layers:
+			Z = l.forward(Z)
 			
 
 		'''
 		Add the residual connection to the output of the convolution layers
 
 		'''
-		#TODO 
+		residual = A
+		residual = self.residual_connection.forward(residual)
+
+		Z = Z + residual
 		
 
 		'''
 		Pass the the sum of the residual layer and convolution layer to the final activation function
 		'''
-		#TODO 
+		Z = self.final_activation.forward(Z)
 
-		return NotImplemented
+		return Z
 	
 
 	def backward(self, grad):
@@ -63,26 +75,29 @@ class ResBlock(object):
 		'''
 		Implement the backward of the final activation
 		'''
-		#TODO 
+		grad = self.final_activation.backward(grad) 
 
 
 		'''
 		Implement the backward of residual layer to get "residual_grad"
 		'''
-		#TODO 
+		residual_grad = grad
+		residual_grad = self.residual_connection.backward(grad)
 
 
 		'''
 		Implement the backward of the convolution layer to get "convlayers_grad"
 		'''
-		#TODO 
-
+		for l in self.convolution_layers[::-1]:
+			grad = l.backward(grad)
+			
+		convlayers_grad = grad
 
 		'''
 		Add convlayers_grad and residual_grad to get the final gradient 
 		'''
-		#TODO 
+		grad = convlayers_grad + residual_grad 
 
 
 
-		return NotImplementedError
+		return grad
