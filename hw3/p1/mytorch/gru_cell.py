@@ -90,7 +90,12 @@ class GRUCell(object):
         # Add your code here.
         # Define your variables based on the writeup using the corresponding
         # names below.
-        
+
+        self.r = self.r_act.forward(np.dot(self.Wrx, self.x) + self.brx + np.dot(self.Wrh, self.hidden) + self.brh)
+        self.z = self.z_act.forward(np.dot(self.Wzx, self.x) + self.bzx + np.dot(self.Wzh, self.hidden) + self.bzh)
+        self.n = self.h_act.forward(np.dot(self.Wnx, self.x) + self.bnx + self.r * (np.dot(self.Wnh, self.hidden) + self.bnh))
+        h_t = (1 - self.z) * self.n + self.z * self.hidden
+
         assert self.x.shape == (self.d,)
         assert self.hidden.shape == (self.h,)
 
@@ -99,8 +104,7 @@ class GRUCell(object):
         assert self.n.shape == (self.h,)
         assert h_t.shape == (self.h,) # h_t is the final output of you GRU cell.
 
-        # return h_t
-        raise NotImplementedError
+        return h_t
 
     def backward(self, delta):
         """GRU cell backward.
@@ -124,15 +128,42 @@ class GRUCell(object):
             derivative of the loss wrt the input hidden h.
 
         """
+        x = self.x.reshape(1, self.d)
+        hidden = self.hidden.reshape(1, self.h)
+        self.r = self.r.reshape(1, self.h)
 
-        # SOME TIPS:
-        # 1) Make sure the shapes of the calculated dWs and dbs match the initalized shapes of the respective Ws and bs
-        # 2) When in doubt about shapes, please refer to the table in the writeup.
-        # 3) Know that the autograder grades the gradients in a certain order, and the local autograder will tell you which gradient you are currently failing.
+        self.dLdz = delta * (self.hidden - self.n)
+        self.dLdn = delta * (1 - self.z)
+
+        dLdz = self.z_act.backward(self.dLdz).reshape(1, self.h)
+        dLdn = self.h_act.backward(self.dLdn).reshape(1, self.h)
         
-        
+        self.dWnx = dLdn.T @ x
+        self.dbnx = dLdn
+
+        self.dLdr = dLdn * (self.Wnh @ self.hidden + self.bnh).T
+
+        self.dWnh = (dLdn.T * self.r.T) @ hidden    
+        self.dbnh = dLdn * self.r
+
+        self.dWzx = dLdz.T @ x
+        self.dbzx = dLdz
+
+        self.dWzh = dLdz.T @ hidden
+        self.dbzh = dLdz
+
+        dLdr = self.r_act.backward(self.dLdr).reshape(1, self.h)
+
+        self.dWrx = dLdr.T @ x
+        self.dbrx = dLdr
+
+        self.dWrh = dLdr.T @ hidden
+        self.dbrh = dLdr
+
+        dx = (dLdn @ self.Wnx.reshape(self.h, self.d) + dLdz @ self.Wzx.reshape(self.h, self.d) + dLdr @ self.Wrx.reshape(self.h, self.d) ).reshape(self.d)
+        dh_prev_t = (delta * self.z + (dLdn * self.r) @ self.Wnh + dLdz @ self.Wzh + dLdr @ self.Wrh).reshape(self.h)
+
         assert dx.shape == (self.d,)
         assert dh_prev_t.shape == (self.h,)
 
-        # return dx, dh_prev_t
-        raise NotImplementedError
+        return dx, dh_prev_t
