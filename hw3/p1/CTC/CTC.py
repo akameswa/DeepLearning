@@ -49,12 +49,12 @@ class CTC(object):
         # -------------------------------------------->
         # TODO
         # <---------------------------------------------
+        skip_connect = [1 if 2 <= i < N - 1 and extended_symbols[i] != self.BLANK and extended_symbols[i] != extended_symbols[i - 2] else 0 for i in range(N)]
 
         extended_symbols = np.array(extended_symbols).reshape((N,))
         skip_connect = np.array(skip_connect).reshape((N,))
 
-        # return extended_symbols, skip_connect
-        raise NotImplementedError
+        return extended_symbols, skip_connect
 
 
     def get_forward_probs(self, logits, extended_symbols, skip_connect):
@@ -90,10 +90,20 @@ class CTC(object):
         # TODO: Compute all values for alpha[t][sym] where 1 <= t < T and 1 <= sym < S (assuming zero-indexing)
         # IMP: Remember to check for skipConnect when calculating alpha
         # <---------------------------------------------
+        alpha[0][0] = logits[0, extended_symbols[0]]
+        alpha[0][1] = logits[0, extended_symbols[1]]
 
-        # return alpha
-        raise NotImplementedError
+        for t in range(1, T):
+            alpha[t][0] = alpha[t - 1][0]*logits[t, extended_symbols[0]]
+            for s in range(1, S):
+                alpha[t][s] = alpha[t - 1][s - 1] + alpha[t - 1][s]
 
+                if skip_connect[s] == 1:
+                    alpha[t][s] += alpha[t - 1][s - 2]
+
+                alpha[t][s] *= logits[t, extended_symbols[s]]
+
+        return alpha
 
     def get_backward_probs(self, logits, extended_symbols, skip_connect):
         """Compute backward probabilities.
@@ -125,10 +135,24 @@ class CTC(object):
         # -------------------------------------------->
         # TODO
         # <--------------------------------------------
+        betahat = np.zeros(shape=(T, S))
+        betahat[T-1][S-1] = logits[T-1, extended_symbols[S-1]]
+        betahat[T-1][S-2] = logits[T-1, extended_symbols[S-2]]
 
-        # return beta
-        raise NotImplementedError
+        for t in range(T - 2, -1, -1):
+            betahat[t][S-1] = logits[t, extended_symbols[S-1]]*betahat[t + 1][S-1]
+            for s in range(S - 2, -1, -1):
+                betahat[t][s] = betahat[t + 1][s] + betahat[t + 1][s + 1]
+                if s <= S-3 and extended_symbols[s] != extended_symbols[s+2]:  
+                    betahat[t][s] += betahat[t + 1][s + 2]
 
+                betahat[t][s] *= logits[t, extended_symbols[s]]
+        
+        for t in range(T-1, -1, -1):
+            for s in range(S-1, -1, -1):
+                beta[t][s] = betahat[t][s]/logits[t, extended_symbols[s]]
+
+        return beta
 
     def get_posterior_probs(self, alpha, beta):
         """Compute posterior probabilities.
@@ -155,10 +179,17 @@ class CTC(object):
         # -------------------------------------------->
         # TODO
         # <---------------------------------------------
+        for t in range(T):
+            sumgamma[t] = 0
+            for i in range(S):
+                gamma[t][i] = alpha[t][i]*beta[t][i]
+                sumgamma[t] += gamma[t][i]
 
-        # return gamma
-        raise NotImplementedError
+        for t in range(T):
+            for i in range(S):
+                gamma[t][i] = gamma[t][i]/sumgamma[t]
 
+        return gamma
 
 class CTCLoss(object):
 
@@ -227,7 +258,7 @@ class CTCLoss(object):
         B, _ = target.shape
         total_loss = np.zeros(B)
         self.extended_symbols = []
-
+        self.gammas = []
         for batch_itr in range(B):
             # -------------------------------------------->
             # Computing CTC Loss for single batch
@@ -245,12 +276,19 @@ class CTCLoss(object):
             # -------------------------------------------->
             # TODO
             # <---------------------------------------------
-            pass
+            
+            batch_target = self.target[batch_itr, :self.target_lengths[batch_itr]]
+            batch_logits = self.logits[:self.input_lengths[batch_itr], batch_itr]
+            batch_extended_symbols, batch_skip_connect = self.ctc.extend_target_with_blank(batch_target)
 
-        total_loss = np.sum(total_loss) / B
+            alpha = self.ctc.get_forward_probs(batch_logits, batch_extended_symbols, batch_skip_connect)
+            beta = self.ctc.get_backward_probs(batch_logits, batch_extended_symbols, batch_skip_connect)
+            gamma = self.ctc.get_posterior_probs(alpha, beta)
+            self.gammas.append(gamma)
 
-        # return total_loss
-        raise NotImplementedError
+            total_loss[batch_itr] = -np.sum(gamma*np.log(batch_logits[:, batch_extended_symbols]))
+        
+        return np.mean(total_loss)
 
 
     def backward(self):
@@ -298,8 +336,14 @@ class CTCLoss(object):
 
             # -------------------------------------------->
             # TODO
-            # <---------------------------------------------
-            pass
-
-        # return dY
-        raise NotImplementedError
+            # <--------------------------------------------- 
+            batch_target = self.target[batch_itr, :self.target_lengths[batch_itr]]
+            batch_logits = self.logits[:self.input_lengths[batch_itr], batch_itr, :]
+            
+            batch_extended_symbols, _ = self.ctc.extend_target_with_blank(batch_target)
+            
+            for t in range(self.input_lengths[batch_itr]):
+                for s in range(len(batch_extended_symbols)):
+                    dY[t, batch_itr, batch_extended_symbols[s]] -= self.gammas[batch_itr][t, s] / batch_logits[t, batch_extended_symbols[s]]
+          
+        return dY
