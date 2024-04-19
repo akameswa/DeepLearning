@@ -60,9 +60,9 @@ class Attention:
             """
 
             # Store the given weights as parameters of the class.
-            self.W_k    = # TODO
-            self.W_q    = # TODO
-            self.W_v    = # TODO
+            self.W_k    = weights_keys
+            self.W_q    = weights_queries            
+            self.W_v    = weights_values
 
             # Use this object to perform softmax related operations.
             # It performs softmax over the last dimension which is what you'll need.
@@ -93,26 +93,26 @@ class Attention:
         
             # Compute the values of Key, Query and Value
 
-            self.Q = # TODO
-            self.K = # TODO
-            self.V = # TODO
+            self.Q = X @ self.W_q
+            self.K = X @ self.W_k
+            self.V = X @ self.W_v
 
             # Calculate unormalized Attention Scores (logits)
 
-            self.A_w    = # TODO
+            self.A_w    = self.Q @ self.K.permute(0, 2, 1)
 
             # Create additive causal attention mask and apply mask
             # Hint: Look into torch.tril/torch.triu and account for batch dimension
 
-            attn_mask    = # TODO
+            attn_mask    = self.A_w.new_ones(self.A_w.size(-1), self.A_w.size(-1)).triu(1)
 
             # Calculate/normalize Attention Scores
 
-            self.A_sig   = # TODO
+            self.A_sig   = self.softmax.forward((self.A_w - 1e9 * attn_mask) / (self.K.size(-1) ** 0.5))
 
             # Calculate Attention context 
 
-            X_new         = # TODO
+            X_new         = self.A_sig @ self.V
 
             return X_new
             
@@ -139,24 +139,24 @@ class Attention:
 
             # Derivatives wrt attention weights (raw and normalized)
 
-            dLdA_sig       = # TODO
-            dLdA_w         = # TODO
+            dLdA_sig       = dLdXnew @ self.V.permute(0, 2, 1)
+            dLdA_w         = self.softmax.backward(dLdA_sig) * 1 / (self.K.size(-1) ** 0.5)
 
             # Derivatives wrt keys, queries, and value
             
-            self.dLdV      = # TODO
-            self.dLdK      = # TODO
-            self.dLdQ      = # TODO
+            self.dLdV      = self.A_sig.permute(0, 2, 1) @ dLdXnew
+            self.dLdK      = dLdA_w.permute(0, 2, 1) @ self.Q
+            self.dLdQ      = dLdA_w @ self.K
 
             # Dervatives wrt weight matrices
             # Remember that you need to sum the derivatives along the batch dimension.
 
-            self.dLdWq     = # TODO
-            self.dLdWv     = # TODO
-            self.dLdWk     = # TODO
+            self.dLdWq     = (self.X.permute(0, 2, 1) @ self.dLdQ).sum(0)
+            self.dLdWv     = (self.X.permute(0, 2, 1) @ self.dLdV).sum(0)
+            self.dLdWk     = (self.X.permute(0, 2, 1) @ self.dLdK).sum(0)
 
             # Derivative wrt input
 
-            dLdX      = # TODO
+            dLdX      = self.dLdQ @ self.W_q.permute(1, 0) + self.dLdK @ self.W_k.permute(1, 0) + self.dLdV @ self.W_v.permute(1, 0)
 
             return dLdX
