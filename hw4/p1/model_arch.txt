@@ -1,0 +1,11 @@
+LanguageModel(
+  (token_embedding): Embedding(33280, 256)
+  (lstm_cells): Sequential(
+    (0): LSTMCell(256, 256)
+    (1): LSTMCell(256, 256)
+    (2): LSTMCell(256, 256)
+  )
+  (token_probability): Sequential(
+    (0): Linear(in_features=256, out_features=33280, bias=True)
+  )
+)
